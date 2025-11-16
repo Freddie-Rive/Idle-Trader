@@ -82,15 +82,19 @@ namespace Trade
         {
             this.basePrice = initialPrice;
             this.production = initialProduction;
-            this.demand = 0;
+            this.demand = 20;
         }
 
-        void CalculatePrice()
+        public void CalculatePrice()
         {
-            this.price = this.basePrice * Mathf.Clamp(this.qty / this.demand, 0.1f, 2f);//experiment without the clamps
+            if (this.qty == 0) {
+                this.price = this.basePrice * 5.0f;
+                return;
+            }
+            this.price = this.basePrice * Mathf.Clamp((this.demand / this.qty), 0. 1f, 3f);//experiment without the clamps
         }
 
-        void UpdateQty() {
+        public void UpdateQty() {
             this.qty += this.production;
             this.qty -= this.demand;
             this.qty = Mathf.Max(this.qty, 0);
@@ -100,7 +104,7 @@ namespace Trade
 
     public class Market
     {
-        public const float updateRate = 5f;
+        public const float updateRate = 1f;
 
         private List<MarketGood> goods;
         private int liquidCurrency;
@@ -168,7 +172,15 @@ namespace Trade
                 {
                     goods.RemoveAt(i);
                     break;
-                }
+                } 
+            }
+        }
+
+        public void UpdateMarket() 
+        {
+            for (int i = 0; i < goods.Count; i++) {
+                goods[i].UpdateQty();
+                goods[i].CalculatePrice();
             }
         }
 
@@ -203,7 +215,7 @@ namespace Trade
             for (int i = 0; i < this.goods.Count; i++) {
                 MarketGood thisGood = goods[i]; 
                 
-                DebugString += "\n" + thisGood.Name + ": Qty: " + thisGood.Quantity + " - Price: " + thisGood.Price;
+                DebugString += "\n" + thisGood.Name + ": Qty: " + thisGood.Quantity + " - Price: " + thisGood.Price.ToString(".00#");
             }  
 
             return DebugString;

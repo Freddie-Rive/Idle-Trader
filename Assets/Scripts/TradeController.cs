@@ -18,7 +18,7 @@ namespace Trade
     {
         protected string name, description;
         protected float price;
-        protected int qty;
+        protected int qty; //could argue we need to have a float here? for smaller numbers? or limit production to min 1?
         protected GoodsCategory goodsCategory;
 
         public Good(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory)
@@ -75,7 +75,7 @@ namespace Trade
 
     public class MarketGood : Good
     {
-        public int production, demand;
+        private int production, demand;
         private float basePrice;
         
         public MarketGood(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory, int initialProduction) : base(_name, initialPrice, initialQty, _goodsCategory)
@@ -84,14 +84,46 @@ namespace Trade
             this.production = initialProduction;
             this.demand = 20;
         }
+		
+		public int Production 
+		{
+				get
+				{
+					return this.production;
+				}
+				set
+				{
+					this.production = value;
+				}
+		}
+		
+		public int Demand 
+		{
+				get
+				{
+					return this.demand;
+				}
+				set
+				{
+					this.demand = value;
+				}
+		}
+		
+		public int TotalQuantity
+		{
+			get 
+			{
+					return this.qty + this.production;
+			}
+		}
 
-        public void CalculatePrice()
+        public void UpdatePrice()
         {
             if (this.qty == 0) {
                 this.price = this.basePrice * 5.0f;
                 return;
             }
-            this.price = this.basePrice * Mathf.Clamp((this.demand / this.qty), 0. 1f, 3f);//experiment without the clamps
+            this.price = this.basePrice * this.demand / this.TotalQuantity;//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
         }
 
         public void UpdateQty() {
@@ -99,6 +131,59 @@ namespace Trade
             this.qty -= this.demand;
             this.qty = Mathf.Max(this.qty, 0);
         }
+		
+				
+		// Calculates Production Modifiers
+		//To Do: apply local production bonuses to various regions
+		public void UpdateProduction (int population = 0)
+		{
+			switch (goodsCategory)
+			{
+				case GoodsCategory.Undefined:
+					this.production = 0;
+					break;
+				case GoodsCategory.Food:
+					this.production = Mathf.RoundToInt(Mathf.Log(population,1.001f)); //ideally, want reducing returns as population increases. im making a malthusian game. because i hate my simulated people
+					break;
+				case GoodsCategory.Fabrics:
+					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 1.2f); //1000 population requirement to start producing, then will produce slightly more than 1 per person
+					break;
+				case GoodsCategory.Spices:
+					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 2f); //1000 population requirement to start producing, then will produce 2 per person
+					break;
+				case GoodsCategory.Treasures:
+					this.production = Mathf.RoundToInt(population * 0.5f);
+					break;
+				default:
+					this.production = 0;
+					break;
+			}
+		}
+		
+		public void UpdateDemand (int population = 0)
+		{
+			switch (goodsCategory)
+			{
+				case GoodsCategory.Undefined:
+					this.demand = 0;
+					break;
+				case GoodsCategory.Food:
+					this.demand = population; //everyone wants 1 food
+					break;
+				case GoodsCategory.Fabrics:
+					this.demand = population; //everyone wants 1 fabric. for now. change later
+					break;
+				case GoodsCategory.Spices:
+					this.demand = Mathf.RoundToInt(population * 2.5f); //everyone wants sooo many spices
+					break;
+				case GoodsCategory.Treasures:
+					this.demand = Mathf.RoundToInt(population * 0.5f); //matches production. lets see what happens.
+					break;
+				default:
+					this.demand = 0;
+					break;
+			}
+		}
 
     }
 
@@ -107,17 +192,20 @@ namespace Trade
         public const float updateRate = 1f;
 
         private List<MarketGood> goods;
-        private int liquidCurrency;
+        private float liquidCurrency;
+        private int population;
         private string name;
+		private bool foodShortage; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
 
-        public Market(string _name, int startingCurrency)
+        public Market(string _name, int startingCurrency, int startingPopulation)
         {
             this.name = _name;
             this.liquidCurrency = startingCurrency;
             this.goods = new List<MarketGood>();
+			this.population = startingPopulation;
         }
 
-        public int LiquidCurrency
+        public float LiquidCurrency
         {
             get
             {
@@ -175,12 +263,39 @@ namespace Trade
                 } 
             }
         }
+		
+		void UpdatePopulation() {
+			if (foodShortage) {
+				this.population = Mathf.RoundToInt(population * 0.8f);
+			} else {
+				this.population = Mathf.RoundToInt(population * 1.1f);
+			}
+		}
 
         public void UpdateMarket() 
         {
+			//currently has 2 for loops. Could perhaps be reduced to 1 without much important missing functionality
+			foodShortage = false;
+			int popsFed = 0;
+			
             for (int i = 0; i < goods.Count; i++) {
+				if (goods[i].Category == GoodsCategory.Food) {
+					popsFed += goods[i].TotalQuantity;
+				}
+				
                 goods[i].UpdateQty();
-                goods[i].CalculatePrice();
+            }
+			
+			if (population > popsFed) {
+				foodShortage = true;
+			}
+			
+			UpdatePopulation();
+			
+			for (int i = 0; i < goods.Count; i++) {
+                goods[i].UpdateProduction(population);
+				goods[i].UpdateDemand(population);
+				goods[i].UpdatePrice();
             }
         }
 
@@ -212,11 +327,16 @@ namespace Trade
 
         public string DebugPrintState () {
             string DebugString = this.Name + " state:";
+			DebugString += "\nPopulation: " + population;
             for (int i = 0; i < this.goods.Count; i++) {
                 MarketGood thisGood = goods[i]; 
                 
-                DebugString += "\n" + thisGood.Name + ": Qty: " + thisGood.Quantity + " - Price: " + thisGood.Price.ToString(".00#");
+                DebugString += "\n" + thisGood.Name + ":\n\tQty:"  + thisGood.Quantity + " \n\tDemand:" + thisGood.Demand + " \n\tProduction:" + thisGood.Production + "\n\tPrice:" + thisGood.Price.ToString(".00#");
             }  
+			
+			if (foodShortage) {
+				DebugString += "\nFamine!";
+			}
 
             return DebugString;
         }

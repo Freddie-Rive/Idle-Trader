@@ -15,10 +15,10 @@ public class PortScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        market = new Market("Test", 100);
+        market = new Market("Test", 100, 1000);
 
-        market.AddGood(new MarketGood("Wheat", 3.0f, 100, GoodsCategory.Treasures, 30));
-        market.AddGood(new MarketGood("Wood", 4.0f, 100, GoodsCategory.Treasures, 22));
+        market.AddGood(new MarketGood("Wheat", 3.0f, 100, GoodsCategory.Food, 30));
+        market.AddGood(new MarketGood("Wood", 4.0f, 100, GoodsCategory.Fabrics, 22));
         market.AddGood(new MarketGood("Gemstones", 10.0f, 100, GoodsCategory.Treasures, 15));
 
         Debug.Log(market.DebugPrintState());

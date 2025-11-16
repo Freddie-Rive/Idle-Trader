@@ -16,10 +16,10 @@ namespace Trade
 
     public class Good
     {
-        public string name, description;
-        public float price;
-        public int qty;
-        public GoodsCategory goodsCategory;
+        protected string name, description;
+        protected float price;
+        protected int qty;
+        protected GoodsCategory goodsCategory;
 
         public Good(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory)
         {
@@ -36,8 +36,40 @@ namespace Trade
             this.name = "";
             this.price = 0.0f;
             this.qty = 0;
-            this.goodsCategory = Undefined;
+            this.goodsCategory = GoodsCategory.Undefined;
             this.description = "";
+        }
+
+        public string Name 
+        {
+            get
+            {
+                return this.name;
+            }
+        }
+
+        public int Quantity 
+        {
+            get
+            {
+                return this.qty;
+            }
+        }
+
+        public float Price
+        {
+            get
+            {
+                return this.price;
+            }
+        }
+
+        public GoodsCategory Category
+        {
+            get
+            {
+                return this.goodsCategory;
+            }
         }
     }
 
@@ -46,25 +78,31 @@ namespace Trade
         public int production, demand;
         private float basePrice;
         
-        public MarketGood(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory, int initialProduction)
+        public MarketGood(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory, int initialProduction) : base(_name, initialPrice, initialQty, _goodsCategory)
         {
-            Good(_name, initialPrice, initialQty, _goodsCategory);
-
             this.basePrice = initialPrice;
             this.production = initialProduction;
             this.demand = 0;
         }
 
-        float CalculatePrice()
+        void CalculatePrice()
         {
-            price = basePrice * Mathf.Clamp(qty / demand, 0.1, 2);//experiment without the clamps
+            this.price = this.basePrice * Mathf.Clamp(this.qty / this.demand, 0.1f, 2f);//experiment without the clamps
+        }
+
+        void UpdateQty() {
+            this.qty += this.production;
+            this.qty -= this.demand;
+            this.qty = Mathf.Max(this.qty, 0);
         }
 
     }
 
     public class Market
     {
-        private List<Good> goods;
+        public const float updateRate = 5f;
+
+        private List<MarketGood> goods;
         private int liquidCurrency;
         private string name;
 
@@ -72,7 +110,7 @@ namespace Trade
         {
             this.name = _name;
             this.liquidCurrency = startingCurrency;
-            this.goods = new List<Good>();
+            this.goods = new List<MarketGood>();
         }
 
         public int LiquidCurrency
@@ -95,7 +133,7 @@ namespace Trade
             }
         }
 
-        public List<Good> Goods
+        public List<MarketGood> Goods
         {
             get
             {
@@ -107,12 +145,12 @@ namespace Trade
             }
         }
 
-        public Good GetGood(int index)
+        public MarketGood GetGood(int index)
         {
             return goods[index];
         }
 
-        public void AddGood(Good newGood)
+        public void AddGood(MarketGood newGood)
         {
             goods.Add(newGood);
         }
@@ -126,7 +164,7 @@ namespace Trade
         {
             for (int i = 0; i < goods.Count; i++)
             {
-                if (goods[i].name == goodName)
+                if (goods[i].Name == goodName)
                 {
                     goods.RemoveAt(i);
                     break;
@@ -136,14 +174,14 @@ namespace Trade
 
         public void SortGoodsByName()
         {
-            List<Good> sorted = new List<Good>();
+            List<MarketGood> sorted = new List<MarketGood>();
 
             for (int i = 0; i < goods.Count; i++)
             {
                 bool inserted = false;
                 for (int o = 0; o < i; o++)
                 {
-                    if (goods[i].name[0] < sorted[o].name[0])
+                    if (goods[i].Name[0] < sorted[o].Name[0])
                     {
                         sorted.Insert(o, goods[i]);
                         inserted = true;
@@ -158,6 +196,17 @@ namespace Trade
             }
 
             goods = sorted;
+        }
+
+        public string DebugPrintState () {
+            string DebugString = this.Name + " state:";
+            for (int i = 0; i < this.goods.Count; i++) {
+                MarketGood thisGood = goods[i]; 
+                
+                DebugString += "\n" + thisGood.Name + ": Qty: " + thisGood.Quantity + " - Price: " + thisGood.Price;
+            }  
+
+            return DebugString;
         }
     }
 

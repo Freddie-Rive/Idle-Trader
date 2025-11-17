@@ -17,9 +17,9 @@ public class PortScript : MonoBehaviour
     {
         market = new Market("Test", 100, 1000);
 
-        market.AddGood(new MarketGood("Wheat", 3.0f, 100, GoodsCategory.Food, 30));
-        market.AddGood(new MarketGood("Wood", 4.0f, 100, GoodsCategory.Fabrics, 22));
-        market.AddGood(new MarketGood("Gemstones", 10.0f, 100, GoodsCategory.Treasures, 15));
+        market.AddGood(new MarketGood("Wheat", GoodsCategory.Food, 5f, market.Population));
+        market.AddGood(new MarketGood("Cloth", GoodsCategory.Fabrics, 30f , market.Population));
+        market.AddGood(new MarketGood("Gemstones", GoodsCategory.Treasures, 100f, market.Population));
 
         Debug.Log(market.DebugPrintState());
     }
@@ -27,10 +27,9 @@ public class PortScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        debugText.GetComponent<TextMeshProUGUI>().text = market.DebugPrintState();
-
         if (Time.time > updateMarketTime) {
             market.UpdateMarket();
+			debugText.GetComponent<TextMeshProUGUI>().text = market.DebugPrintState();
             updateMarketTime += Market.updateRate;
         }
     }

@@ -10,9 +10,36 @@ namespace Trade
         Undefined,
         Food,
         Fabrics,
+		Manufactured,
         Spices,
         Treasures
     }
+	
+	//replace name with a goodstype that contains alll the goodies. Probably replace goodscategory variable with a function that derives it from the goodstype
+	public enum GoodsType
+	{
+		Undefined,
+		Wheat,
+		Rice,
+		Meat,
+		Fruit,
+		Cotton,
+		Wool,
+		Hemp,
+		Wood,
+		Clothes,
+		Tools,
+		Weapons,
+		Sheets,
+		Utensils,
+		Saffron,
+		Pepper,
+		Gold,
+		Silver,
+		Gemstones,
+		Fine_Cutlery,
+		Fine_Ornaments
+	}
 
     public class Good
     {
@@ -82,8 +109,19 @@ namespace Trade
         {
             this.basePrice = initialPrice;
             this.production = initialProduction;
-            this.demand = 20;
+            UpdateDemand();
         }
+		
+		public MarketGood(string _name, GoodsCategory _goodsCategory, float _basePrice, int population) {
+			this.name = _name;
+			this.qty = 0;
+			this.goodsCategory = _goodsCategory;
+			this.basePrice = _basePrice;
+			this.description = "";
+			
+			UpdateProduction(population);
+			UpdateDemand(population);
+		}
 		
 		public int Production 
 		{
@@ -119,7 +157,7 @@ namespace Trade
 
         public void UpdatePrice()
         {
-            if (this.qty == 0) {
+            if (this.TotalQuantity == 0) {
                 this.price = this.basePrice * 5.0f;
                 return;
             }
@@ -224,6 +262,14 @@ namespace Trade
                 return name;
             }
         }
+		
+		public int Population 
+		{
+			get
+			{
+				return population;
+			}
+		}
 
         public List<MarketGood> Goods
         {

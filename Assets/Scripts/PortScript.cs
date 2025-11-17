@@ -17,9 +17,9 @@ public class PortScript : MonoBehaviour
     {
         market = new Market("Test", 100, 1000);
 
-        market.AddGood(new MarketGood("Wheat", GoodsCategory.Food, 5f, market.Population));
-        market.AddGood(new MarketGood("Cloth", GoodsCategory.Fabrics, 30f , market.Population));
-        market.AddGood(new MarketGood("Gemstones", GoodsCategory.Treasures, 100f, market.Population));
+        market.AddGood(new MarketGood(GoodsType.Wheat, 5f, market.Population));
+        market.AddGood(new MarketGood(GoodsType.Meat, 5f , market.Population));
+
 
         Debug.Log(market.DebugPrintState());
     }
@@ -29,7 +29,7 @@ public class PortScript : MonoBehaviour
     {
         if (Time.time > updateMarketTime) {
             market.UpdateMarket();
-			debugText.GetComponent<TextMeshProUGUI>().text = market.DebugPrintState();
+			debugText.GetComponent<TextMeshPro>().text = market.DebugPrintState();
             updateMarketTime += Market.updateRate;
         }
     }

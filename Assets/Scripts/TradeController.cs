@@ -26,6 +26,7 @@ namespace Trade
 		Cotton,
 		Wool,
 		Hemp,
+        Silk,
 		Wood,
 		Clothes,
 		Tools,
@@ -43,24 +44,25 @@ namespace Trade
 
     public class Good
     {
-        protected string name, description;
+        protected GoodsType goodType;
+        protected string description;
         protected float price;
         protected int qty; //could argue we need to have a float here? for smaller numbers? or limit production to min 1?
-        protected GoodsCategory goodsCategory;
+        protected GoodsCategory goodsCategory; //setup based on the goodsType, shouldn't be settable outside the object
 
-        public Good(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory)
+        public Good(GoodsType type, float initialPrice, int initialQty)
         {
-            this.name = _name;
+            this.goodType = type;
             this.price = initialPrice;
             this.qty = initialQty;
-            this.goodsCategory = _goodsCategory;
+            SetGoodsCategory();
 
             this.description = "";
         }
 
         public Good()
         {
-            this.name = "";
+            this.goodType = GoodsType.Undefined;
             this.price = 0.0f;
             this.qty = 0;
             this.goodsCategory = GoodsCategory.Undefined;
@@ -71,7 +73,53 @@ namespace Trade
         {
             get
             {
-                return this.name;
+                switch(this.goodType)
+                {
+                    case GoodsType.Wheat:
+                        return "Wheat";
+                    case GoodsType.Rice:
+                        return "Rice";
+                    case GoodsType.Meat:
+                        return "Meat";
+                    case GoodsType.Fruit:
+                        return "Fruit";
+                    case GoodsType.Cotton:
+                        return "Cotton";
+                    case GoodsType.Wool:
+                        return "Wool";
+                    case GoodsType.Hemp:
+                        return "Hemp";
+                    case GoodsType.Silk:
+                        return "Silk";
+                    case GoodsType.Wood:
+                        return "Wood";
+                    case GoodsType.Clothes:
+                        return "Clothes";
+                    case GoodsType.Tools:
+                        return "Tools";
+                    case GoodsType.Weapons:
+                        return "Weapons";
+                    case GoodsType.Sheets:
+                        return "Sheets";
+                    case GoodsType.Utensils:
+                        return "Utensils";
+                    case GoodsType.Saffron:
+                        return "Saffron";
+                    case GoodsType.Pepper:
+                        return "Pepper";
+                    case GoodsType.Gold:
+                        return "Gold";
+                    case GoodsType.Silver:
+                        return "Silver";
+                    case GoodsType.Gemstones:
+                        return "Gemstones";
+                    case GoodsType.Fine_Cutlery:
+                        return "Fine Cutlery";
+                    case GoodsType.Fine_Ornaments:
+                        return "Fine Ornaments";
+                    default:
+                        return "Undefined";
+                }
             }
         }
 
@@ -98,75 +146,154 @@ namespace Trade
                 return this.goodsCategory;
             }
         }
+
+        protected void SetGoodsCategory () 
+        {
+            switch(this.goodType)
+            {
+                case GoodsType.Wheat:
+                case GoodsType.Rice:
+                case GoodsType.Meat:
+                case GoodsType.Fruit:
+                    this.goodsCategory = GoodsCategory.Food;
+                    break;
+                case GoodsType.Cotton:
+                case GoodsType.Wool:
+                case GoodsType.Hemp:
+                case GoodsType.Silk:
+                    this.goodsCategory = GoodsCategory.Fabrics;
+                    break;
+                case GoodsType.Wood:
+                case GoodsType.Clothes:
+                case GoodsType.Tools:
+                case GoodsType.Weapons:
+                case GoodsType.Sheets:
+                case GoodsType.Utensils:
+                    this.goodsCategory = GoodsCategory.Manufactured;
+                    break;
+                case GoodsType.Saffron:
+                case GoodsType.Pepper:
+                    this.goodsCategory = GoodsCategory.Spices;
+                    break;
+                case GoodsType.Gold:
+                case GoodsType.Silver:
+                case GoodsType.Gemstones:
+                case GoodsType.Fine_Cutlery:
+                case GoodsType.Fine_Ornaments:
+                    this.goodsCategory = GoodsCategory.Treasures;
+                    break;
+                default:
+                    this.goodsCategory = GoodsCategory.Undefined;
+                    break;
+            }
+        }
+
+        public static float WeightPerGoodsType(GoodsType type) {
+            switch(type)
+                {
+                case GoodsType.Wheat:
+                    return 1f;
+                case GoodsType.Rice:
+                    return 1f;
+                case GoodsType.Meat:
+                    return 2f;
+                case GoodsType.Fruit:
+                    return 1.5f;
+                case GoodsType.Cotton:
+                    return 1f;
+                case GoodsType.Wool:
+                    return 1.5f;
+                case GoodsType.Hemp:
+                    return 0.5f;
+                case GoodsType.Silk:
+                    return 3f;
+                case GoodsType.Wood:
+                    return 0.5f;
+                case GoodsType.Clothes:
+                    return 1f;
+                case GoodsType.Tools:
+                    return 2f;
+                case GoodsType.Weapons:
+                    return 1.5f;
+                case GoodsType.Sheets:
+                    return 0.7f;
+                case GoodsType.Utensils:
+                    return 1f;
+                case GoodsType.Saffron:
+                    return 1f;
+                case GoodsType.Pepper:
+                    return 3f;
+                case GoodsType.Gold:
+                    return 7f;
+                case GoodsType.Silver:
+                    return 1f;
+                case GoodsType.Gemstones:
+                    return 10f;
+                case GoodsType.Fine_Cutlery:
+                    return 5f;
+                case GoodsType.Fine_Ornaments:
+                    return 7f;
+                default:
+                    return 0f;
+            }
+        }
     }
 
     public class MarketGood : Good
     {
-        private int production, demand;
+        private int production;
         private float basePrice;
-        
-        public MarketGood(string _name, float initialPrice, int initialQty, GoodsCategory _goodsCategory, int initialProduction) : base(_name, initialPrice, initialQty, _goodsCategory)
+
+        //mostly deprecated        
+        public MarketGood(GoodsType type, float initialPrice, int initialQty, int initialProduction) : base(type, initialPrice, initialQty)
         {
             this.basePrice = initialPrice;
             this.production = initialProduction;
-            UpdateDemand();
         }
 		
-		public MarketGood(string _name, GoodsCategory _goodsCategory, float _basePrice, int population) {
-			this.name = _name;
+		public MarketGood(GoodsType type, float _basePrice, int population) {
+			this.goodType = type;
 			this.qty = 0;
-			this.goodsCategory = _goodsCategory;
 			this.basePrice = _basePrice;
 			this.description = "";
 			
+            SetGoodsCategory();
 			UpdateProduction(population);
-			UpdateDemand(population);
 		}
 		
 		public int Production 
 		{
-				get
-				{
-					return this.production;
-				}
-				set
-				{
-					this.production = value;
-				}
-		}
-		
-		public int Demand 
-		{
-				get
-				{
-					return this.demand;
-				}
-				set
-				{
-					this.demand = value;
-				}
+            get
+            {
+                return this.production;
+            }
+            set
+            {
+                this.production = value;
+            }
 		}
 		
 		public int TotalQuantity
 		{
 			get 
 			{
-					return this.qty + this.production;
+                return this.qty + this.production;
 			}
 		}
 
-        public void UpdatePrice()
+        public void UpdatePrice(int demand)
         {
             if (this.TotalQuantity == 0) {
                 this.price = this.basePrice * 5.0f;
                 return;
             }
-            this.price = this.basePrice * this.demand / this.TotalQuantity;//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
+            this.price = this.basePrice * demand / this.TotalQuantity;//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
         }
 
-        public void UpdateQty() {
+        public void UpdateQty(int demand) 
+        {
             this.qty += this.production;
-            this.qty -= this.demand;
+            this.qty -= demand;
             this.qty = Mathf.Max(this.qty, 0);
         }
 		
@@ -197,32 +324,6 @@ namespace Trade
 					break;
 			}
 		}
-		
-		public void UpdateDemand (int population = 0)
-		{
-			switch (goodsCategory)
-			{
-				case GoodsCategory.Undefined:
-					this.demand = 0;
-					break;
-				case GoodsCategory.Food:
-					this.demand = population; //everyone wants 1 food
-					break;
-				case GoodsCategory.Fabrics:
-					this.demand = population; //everyone wants 1 fabric. for now. change later
-					break;
-				case GoodsCategory.Spices:
-					this.demand = Mathf.RoundToInt(population * 2.5f); //everyone wants sooo many spices
-					break;
-				case GoodsCategory.Treasures:
-					this.demand = Mathf.RoundToInt(population * 0.5f); //matches production. lets see what happens.
-					break;
-				default:
-					this.demand = 0;
-					break;
-			}
-		}
-
     }
 
     public class Market
@@ -234,6 +335,9 @@ namespace Trade
         private int population;
         private string name;
 		private bool foodShortage; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
+
+        private int[] demand = new int[System.Enum.GetNames(typeof(GoodsCategory)).Length];
+        // private int[] localProductionModifiers = new int[System.Enum.GetNames(typeof(GoodsType)).Length];
 
         public Market(string _name, int startingCurrency, int startingPopulation)
         {
@@ -309,6 +413,16 @@ namespace Trade
                 } 
             }
         }
+
+        public void UpdateDemand (int population = 0)
+		{
+            demand[(int)GoodsCategory.Undefined] = 0;
+            demand[(int)GoodsCategory.Food] = population;
+            demand[(int)GoodsCategory.Fabrics] = population;
+            demand[(int)GoodsCategory.Manufactured] = Mathf.RoundToInt(population * 2.5f);
+            demand[(int)GoodsCategory.Spices] = Mathf.RoundToInt(population * 0.5f);
+            demand[(int)GoodsCategory.Treasures] = Mathf.RoundToInt(population * 0.5f);
+		}
 		
 		void UpdatePopulation() {
 			if (foodShortage) {
@@ -329,7 +443,7 @@ namespace Trade
 					popsFed += goods[i].TotalQuantity;
 				}
 				
-                goods[i].UpdateQty();
+                goods[i].UpdateQty(1);
             }
 			
 			if (population > popsFed) {
@@ -340,9 +454,10 @@ namespace Trade
 			
 			for (int i = 0; i < goods.Count; i++) {
                 goods[i].UpdateProduction(population);
-				goods[i].UpdateDemand(population);
-				goods[i].UpdatePrice();
+				goods[i].UpdatePrice(1);
             }
+
+            UpdateDemand();
         }
 
         public void SortGoodsByName()
@@ -377,7 +492,7 @@ namespace Trade
             for (int i = 0; i < this.goods.Count; i++) {
                 MarketGood thisGood = goods[i]; 
                 
-                DebugString += "\n" + thisGood.Name + ":\n\tQty:"  + thisGood.Quantity + " \n\tDemand:" + thisGood.Demand + " \n\tProduction:" + thisGood.Production + "\n\tPrice:" + thisGood.Price.ToString(".00#");
+                DebugString += "\n" + thisGood.Name + ":\n\tQty:"  + thisGood.Quantity/* + " \n\tDemand:" + thisGood.Demand*/ + " \n\tProduction:" + thisGood.Production + "\n\tPrice:" + thisGood.Price.ToString(".00#");
             }  
 			
 			if (foodShortage) {

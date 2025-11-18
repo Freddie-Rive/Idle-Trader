@@ -49,6 +49,9 @@ namespace Trade
         protected float price;
         protected int qty; //could argue we need to have a float here? for smaller numbers? or limit production to min 1?
         protected GoodsCategory goodsCategory; //setup based on the goodsType, shouldn't be settable outside the object
+		
+		public static int goodsCategoryCount = System.Enum.GetNames(typeof(GoodsCategory)).Length;
+		public static int goodsTypeCount = System.Enum.GetNames(typeof(GoodsType)).Length;
 
         public Good(GoodsType type, float initialPrice, int initialQty)
         {
@@ -146,6 +149,22 @@ namespace Trade
                 return this.goodsCategory;
             }
         }
+		
+		public GoodsType Type
+		{
+			get
+			{
+				return this.goodType;
+			}
+		}
+		
+		public int categoryIndex
+		{
+			get
+			{
+				return (int)this.goodsCategory;
+			}
+		}
 
         protected void SetGoodsCategory () 
         {
@@ -280,8 +299,16 @@ namespace Trade
                 return this.qty + this.production;
 			}
 		}
+		
+		public int WeightedQuantity
+		{
+			get
+			{
+				return Mathf.RoundToInt(this.qty * WeightPerGoodsType(this.goodType));
+			}
+		}
 
-        public void UpdatePrice(int demand)
+        public void UpdatePrice(int demand, float weightedPercQty)
         {
             if (this.TotalQuantity == 0) {
                 this.price = this.basePrice * 5.0f;
@@ -313,6 +340,9 @@ namespace Trade
 				case GoodsCategory.Fabrics:
 					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 1.2f); //1000 population requirement to start producing, then will produce slightly more than 1 per person
 					break;
+				case GoodsCategory.Manufactured: 
+					this.production = Mathf.RoundToInt(Mathf.Max(population / 100)); //this is a low base level that would represent some form of artisans, to be overwritten by proper guilds / manufactories
+					break;
 				case GoodsCategory.Spices:
 					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 2f); //1000 population requirement to start producing, then will produce 2 per person
 					break;
@@ -336,7 +366,7 @@ namespace Trade
         private string name;
 		private bool foodShortage; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
 
-        private int[] demand = new int[System.Enum.GetNames(typeof(GoodsCategory)).Length];
+        private int[] demand = new int[Good.goodsCategoryCount];
         // private int[] localProductionModifiers = new int[System.Enum.GetNames(typeof(GoodsType)).Length];
 
         public Market(string _name, int startingCurrency, int startingPopulation)
@@ -414,14 +444,14 @@ namespace Trade
             }
         }
 
-        public void UpdateDemand (int population = 0)
+        public void UpdateDemand ()
 		{
             demand[(int)GoodsCategory.Undefined] = 0;
-            demand[(int)GoodsCategory.Food] = population;
-            demand[(int)GoodsCategory.Fabrics] = population;
-            demand[(int)GoodsCategory.Manufactured] = Mathf.RoundToInt(population * 2.5f);
-            demand[(int)GoodsCategory.Spices] = Mathf.RoundToInt(population * 0.5f);
-            demand[(int)GoodsCategory.Treasures] = Mathf.RoundToInt(population * 0.5f);
+            demand[(int)GoodsCategory.Food] = this.population;
+            demand[(int)GoodsCategory.Fabrics] = this.population;
+            demand[(int)GoodsCategory.Manufactured] = Mathf.RoundToInt(this.population * 2.5f);
+            demand[(int)GoodsCategory.Spices] = Mathf.RoundToInt(this.population * 0.5f);
+            demand[(int)GoodsCategory.Treasures] = Mathf.RoundToInt(this.population * 0.5f);
 		}
 		
 		void UpdatePopulation() {
@@ -436,26 +466,36 @@ namespace Trade
         {
 			//currently has 2 for loops. Could perhaps be reduced to 1 without much important missing functionality
 			foodShortage = false;
-			int popsFed = 0;
+			//int popsFed = 0; using the categorySupply for food instead
 			
+			int[] supply = new int[Good.goodsCategoryCount];
+			
+			//group supply from various goods to their categories
             for (int i = 0; i < goods.Count; i++) {
-				if (goods[i].Category == GoodsCategory.Food) {
-					popsFed += goods[i].TotalQuantity;
-				}
-				
-                goods[i].UpdateQty(1);
+				supply[goods[i].categoryIndex] += goods[i].WeightedQuantity;
             }
 			
-			if (population > popsFed) {
+			
+			// check if there is a famine
+			if (population > supply[(int)GoodsCategory.Food]) {
 				foodShortage = true;
 			}
 			
-			UpdatePopulation();
-			
+			//assign each individual goods weight, update its quantity
 			for (int i = 0; i < goods.Count; i++) {
-                goods[i].UpdateProduction(population);
-				goods[i].UpdatePrice(1);
+				float weightedPercQty = 0f;
+				int demandSatisfied = 0;
+				if (supply[goods[i].categoryIndex] > 0) {
+					weightedPercQty = (float)goods[i].WeightedQuantity / (float)supply[goods[i].categoryIndex];
+					demandSatisfied = Mathf.RoundToInt(demand[goods[i].categoryIndex] * weightedPercQty);
+				}
+				
+				goods[i].UpdateQty(Mathf.RoundToInt(demandSatisfied / Good.WeightPerGoodsType(goods[i].Type)));
+				goods[i].UpdatePrice(demandSatisfied, weightedPercQty);
+				goods[i].UpdateProduction(this.population); //currently before the population changes? might make things weird?
             }
+			
+			UpdatePopulation();
 
             UpdateDemand();
         }

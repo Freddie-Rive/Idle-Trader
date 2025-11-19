@@ -75,7 +75,7 @@ namespace Trade
 			public ProductionFacility() 
 			{
 				this.name = "Undefined";
-				this.goodType = GoodType.Undefined;
+				this.goodType = GoodsType.Undefined;
 				this.productionMethod = ProductionMethod.Undefined;
 				this.isUpgradable = false;
 				this.isStackable = false;
@@ -127,7 +127,7 @@ namespace Trade
         {
             get
             {
-               return goodsType.ToString();
+               return goodType.ToString();
             }
         }
 
@@ -543,6 +543,7 @@ namespace Trade
 			for (int i = 0; i < Good.goodsCategoryCount; i++) {
 				debugCategories[i] = "\n" + (((GoodsCategory)i).ToString()) + ":";
 				debugCategories[i] += "\nDemand: " + demand[i];
+                debugCategories[i] += "\nSupply: " + supply[i];
 			}
 			
             for (int i = 0; i < this.goods.Count; i++) {

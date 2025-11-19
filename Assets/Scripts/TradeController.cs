@@ -41,6 +41,57 @@ namespace Trade
 		Fine_Cutlery,
 		Fine_Ornaments
 	}
+	
+	//Will be used by ProductionFacility to return a different amount of 
+	public enum ProductionMethod
+	{
+		Undefined,
+		EquivalentToPop,
+		HalfOfPop,
+		TwoPerPop,
+		Subsistance,
+		NoProduction
+	}
+	
+	//will be used by markets to produce goods. probably will be included in the MarketGood object
+	public class ProductionFacility
+	{
+			private string name;
+			private GoodsType goodType;
+			private ProductionMethod productionMethod;
+			private bool isUpgradable, isStackable;
+			private int count;
+			
+			public ProductionFacility (string _name, GoodsType _goodType,  ProductionMethod _productionMethod, bool _upgradable, bool _stackable, int _count = 1) 
+			{
+				this.name = _name;
+				this.goodType = _goodType;
+				this.productionMethod = _productionMethod;
+				this.isUpgradable  = _upgradable;
+				this.isStackable = _stackable;
+				this.count = _count;
+			}
+			
+			public ProductionFacility() 
+			{
+				this.name = "Undefined";
+				this.goodType = GoodType.Undefined;
+				this.productionMethod = ProductionMethod.Undefined;
+				this.isUpgradable = false;
+				this.isStackable = false;
+				this.count = 0;
+			}
+			
+			//using just these two values, derive a template production facility
+			public ProductionFacility(GoodsType _goodType, ProductionMethod _productionMethod) {
+				
+			}
+			
+			public int GetProduction(int employees) 
+			{
+				return 0;
+			}
+	}
 
     public class Good
     {
@@ -76,53 +127,7 @@ namespace Trade
         {
             get
             {
-                switch(this.goodType)
-                {
-                    case GoodsType.Wheat:
-                        return "Wheat";
-                    case GoodsType.Rice:
-                        return "Rice";
-                    case GoodsType.Meat:
-                        return "Meat";
-                    case GoodsType.Fruit:
-                        return "Fruit";
-                    case GoodsType.Cotton:
-                        return "Cotton";
-                    case GoodsType.Wool:
-                        return "Wool";
-                    case GoodsType.Hemp:
-                        return "Hemp";
-                    case GoodsType.Silk:
-                        return "Silk";
-                    case GoodsType.Wood:
-                        return "Wood";
-                    case GoodsType.Clothes:
-                        return "Clothes";
-                    case GoodsType.Tools:
-                        return "Tools";
-                    case GoodsType.Weapons:
-                        return "Weapons";
-                    case GoodsType.Sheets:
-                        return "Sheets";
-                    case GoodsType.Utensils:
-                        return "Utensils";
-                    case GoodsType.Saffron:
-                        return "Saffron";
-                    case GoodsType.Pepper:
-                        return "Pepper";
-                    case GoodsType.Gold:
-                        return "Gold";
-                    case GoodsType.Silver:
-                        return "Silver";
-                    case GoodsType.Gemstones:
-                        return "Gemstones";
-                    case GoodsType.Fine_Cutlery:
-                        return "Fine Cutlery";
-                    case GoodsType.Fine_Ornaments:
-                        return "Fine Ornaments";
-                    default:
-                        return "Undefined";
-                }
+               return goodsType.ToString();
             }
         }
 
@@ -367,6 +372,7 @@ namespace Trade
 		private bool foodShortage; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
 
         private int[] demand = new int[Good.goodsCategoryCount];
+		private int[] supply = new int[Good.goodsCategoryCount];
         // private int[] localProductionModifiers = new int[System.Enum.GetNames(typeof(GoodsType)).Length];
 
         public Market(string _name, int startingCurrency, int startingPopulation)
@@ -468,7 +474,8 @@ namespace Trade
 			foodShortage = false;
 			//int popsFed = 0; using the categorySupply for food instead
 			
-			int[] supply = new int[Good.goodsCategoryCount];
+			//wipe existing supply
+			supply = new int[Good.goodsCategoryCount];
 			
 			//group supply from various goods to their categories
             for (int i = 0; i < goods.Count; i++) {
@@ -525,15 +532,28 @@ namespace Trade
 
             goods = sorted;
         }
-
+		
         public string DebugPrintState () {
             string DebugString = this.Name + " state:";
+			
+			string[] debugCategories = new string[Good.goodsCategoryCount];
+			
 			DebugString += "\nPopulation: " + population;
+			
+			for (int i = 0; i < Good.goodsCategoryCount; i++) {
+				debugCategories[i] = "\n" + (((GoodsCategory)i).ToString()) + ":";
+				debugCategories[i] += "\nDemand: " + demand[i];
+			}
+			
             for (int i = 0; i < this.goods.Count; i++) {
                 MarketGood thisGood = goods[i]; 
                 
-                DebugString += "\n" + thisGood.Name + ":\n\tQty:"  + thisGood.Quantity/* + " \n\tDemand:" + thisGood.Demand*/ + " \n\tProduction:" + thisGood.Production + "\n\tPrice:" + thisGood.Price.ToString(".00#");
+                debugCategories[thisGood.categoryIndex] += "\n\t" + thisGood.Name + ":\n\t\tQty:"  + thisGood.Quantity+ " \n\t\tProduction:" + thisGood.Production + "\n\t\tPrice:" + thisGood.Price.ToString(".00#");
             }  
+			
+			for (int i = 0; i < Good.goodsCategoryCount; i++) {
+				DebugString += debugCategories[i];
+			}
 			
 			if (foodShortage) {
 				DebugString += "\nFamine!";

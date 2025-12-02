@@ -83,13 +83,29 @@ namespace Trade
 			}
 			
 			//using just these two values, derive a template production facility
-			public ProductionFacility(GoodsType _goodType, ProductionMethod _productionMethod) {
-				
-			}
+			// public ProductionFacility(GoodsType _goodType, ProductionMethod _productionMethod) {
+                
+    		// }
 			
 			public int GetProduction(int employees) 
 			{
-				return 0;
+				switch(this.productionMethod) 
+                {
+                    case ProductionMethod.Undefined:
+                        return 0;
+                    case ProductionMethod.EquivalentToPop:
+                        return employees;
+                    case ProductionMethod.HalfOfPop:
+                        return employees / 2;
+                    case ProductionMethod.TwoPerPop:
+                        return employees * 2;
+                    case ProductionMethod.Subsistance:
+                        return Mathf.RoundToInt(Mathf.Log(employees,1.001f));;
+                    case ProductionMethod.NoProduction:
+                        return 0;
+                    default:
+                        return 0;
+                }
 			}
 	}
 
@@ -267,6 +283,7 @@ namespace Trade
     {
         private int production;
         private float basePrice;
+        private ProductionFacility productionFacility;
 
         //mostly deprecated        
         public MarketGood(GoodsType type, float initialPrice, int initialQty, int initialProduction) : base(type, initialPrice, initialQty)

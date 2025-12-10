@@ -60,16 +60,16 @@ namespace Trade
 			private GoodsType goodType;
 			private ProductionMethod productionMethod;
 			private bool isUpgradable, isStackable;
-			private int count;
+			private int levels;
 			
-			public ProductionFacility (string _name, GoodsType _goodType,  ProductionMethod _productionMethod, bool _upgradable, bool _stackable, int _count = 1) 
+			public ProductionFacility (string _name, GoodsType _goodType,  ProductionMethod _productionMethod, bool _upgradable, bool _stackable, int _levels = 1) 
 			{
 				this.name = _name;
 				this.goodType = _goodType;
 				this.productionMethod = _productionMethod;
 				this.isUpgradable  = _upgradable;
 				this.isStackable = _stackable;
-				this.count = _count;
+				this.levels = _levels;
 			}
 			
 			public ProductionFacility() 
@@ -79,13 +79,24 @@ namespace Trade
 				this.productionMethod = ProductionMethod.Undefined;
 				this.isUpgradable = false;
 				this.isStackable = false;
-				this.count = 0;
+				this.levels = 0;
 			}
 			
 			//using just these two values, derive a template production facility
 			// public ProductionFacility(GoodsType _goodType, ProductionMethod _productionMethod) {
                 
     		// }
+			
+			public int Levels
+			{
+				get
+				{
+					return this.levels;
+				}
+			}
+			
+			public static int MaxEmployeeCountPerLevel = 10000;
+				
 			
 			public int GetProduction(int employees) 
 			{
@@ -281,7 +292,7 @@ namespace Trade
 
     public class MarketGood : Good
     {
-        private int production;
+		private int production;
         private float basePrice;
         private ProductionFacility productionFacility;
 
@@ -289,29 +300,28 @@ namespace Trade
         public MarketGood(GoodsType type, float initialPrice, int initialQty, int initialProduction) : base(type, initialPrice, initialQty)
         {
             this.basePrice = initialPrice;
-            this.production = initialProduction;
+            //this.production = initialProduction;
+			
+			this.productionFacility = new ProductionFacility("Temp", type, ProductionMethod.EquivalentToPop, true, true, 1);
         }
 		
-		public MarketGood(GoodsType type, float _basePrice, int population) {
+		public MarketGood(GoodsType type, float _basePrice, ProductionMethod _productionMethod) {
 			this.goodType = type;
 			this.qty = 0;
 			this.basePrice = _basePrice;
 			this.description = "";
 			
+			this.productionFacility = new ProductionFacility("Temp", type, _productionMethod, true, true, 1);
+			
             SetGoodsCategory();
-			UpdateProduction(population);
 		}
 		
-		public int Production 
+		public int Production
 		{
-            get
-            {
-                return this.production;
-            }
-            set
-            {
-                this.production = value;
-            }
+			get
+			{
+				return this.production;
+			}
 		}
 		
 		public int TotalQuantity
@@ -346,35 +356,43 @@ namespace Trade
             this.qty = Mathf.Max(this.qty, 0);
         }
 		
+		public ProductionFacility Facility 
+		{
+			get
+			{
+				return this.productionFacility;
+			}
+		}
 				
 		// Calculates Production Modifiers
 		//To Do: apply local production bonuses to various regions
-		public void UpdateProduction (int population = 0)
+		public void UpdateProduction (int employees = 0)
 		{
-			switch (goodsCategory)
-			{
-				case GoodsCategory.Undefined:
-					this.production = 0;
-					break;
-				case GoodsCategory.Food:
-					this.production = Mathf.RoundToInt(Mathf.Log(population,1.001f)); //ideally, want reducing returns as population increases. im making a malthusian game. because i hate my simulated people
-					break;
-				case GoodsCategory.Fabrics:
-					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 1.2f); //1000 population requirement to start producing, then will produce slightly more than 1 per person
-					break;
-				case GoodsCategory.Manufactured: 
-					this.production = Mathf.RoundToInt(Mathf.Max(population / 100)); //this is a low base level that would represent some form of artisans, to be overwritten by proper guilds / manufactories
-					break;
-				case GoodsCategory.Spices:
-					this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 2f); //1000 population requirement to start producing, then will produce 2 per person
-					break;
-				case GoodsCategory.Treasures:
-					this.production = Mathf.RoundToInt(population * 0.5f);
-					break;
-				default:
-					this.production = 0;
-					break;
-			}
+			this.production = this.productionFacility.GetProduction(employees);
+		//	switch (goodsCategory)
+		//	{
+		//		case GoodsCategory.Undefined:
+		//			this.production = 0;
+		//			break;
+		//		case GoodsCategory.Food:
+		//			this.production = Mathf.RoundToInt(Mathf.Log(population,1.001f)); //ideally, want reducing returns as population increases. im making a malthusian game. because i hate my simulated people
+		//			break;
+		//		case GoodsCategory.Fabrics:
+		//			this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 1.2f); //1000 population requirement to start producing, then will produce slightly more than 1 per person
+		//			break;
+		//		case GoodsCategory.Manufactured: 
+		//			this.production = Mathf.RoundToInt(Mathf.Max(population / 100)); //this is a low base level that would represent some form of artisans, to be overwritten by proper guilds / manufactories
+		//			break;
+		//		case GoodsCategory.Spices:
+		//			this.production = Mathf.RoundToInt(Mathf.Max(population - 1000,0) * 2f); //1000 population requirement to start producing, then will produce 2 per person
+		//			break;
+		//		case GoodsCategory.Treasures:
+		//			this.production = Mathf.RoundToInt(population * 0.5f);
+		//			break;
+		//		default:
+		//			this.production = 0;
+		//			break;
+		//	}
 		}
     }
 
@@ -494,16 +512,19 @@ namespace Trade
 			//wipe existing supply
 			supply = new int[Good.goodsCategoryCount];
 			
+			int facilityCount = 0;
 			//group supply from various goods to their categories
             for (int i = 0; i < goods.Count; i++) {
 				supply[goods[i].categoryIndex] += goods[i].WeightedQuantity;
+				facilityCount += goods[i].Facility.Levels;
             }
-			
 			
 			// check if there is a famine
 			if (population > supply[(int)GoodsCategory.Food]) {
 				foodShortage = true;
 			}
+			
+			int employeesPerFacility = this.population / facilityCount;
 			
 			//assign each individual goods weight, update its quantity
 			for (int i = 0; i < goods.Count; i++) {
@@ -514,9 +535,11 @@ namespace Trade
 					demandSatisfied = Mathf.RoundToInt(demand[goods[i].categoryIndex] * weightedPercQty);
 				}
 				
+				
+				//collapse these into a single update function 
+				goods[i].UpdateProduction(Mathf.Min(employeesPerFacility * goods[i].Facility.Levels, ProductionFacility.MaxEmployeeCountPerLevel * goods[i].Facility.Levels)); //currently before the population changes? might make things weird?
 				goods[i].UpdateQty(Mathf.RoundToInt(demandSatisfied / Good.WeightPerGoodsType(goods[i].Type)));
 				goods[i].UpdatePrice(demandSatisfied, weightedPercQty);
-				goods[i].UpdateProduction(this.population); //currently before the population changes? might make things weird?
             }
 			
 			UpdatePopulation();
@@ -554,27 +577,45 @@ namespace Trade
             string DebugString = this.Name + " state:";
 			
 			string[] debugCategories = new string[Good.goodsCategoryCount];
+			bool[] categoryPopulated = new bool[Good.goodsCategoryCount];
 			
 			DebugString += "\nPopulation: " + population;
+			
+			int facilityLevelCount = 0;
 			
 			for (int i = 0; i < Good.goodsCategoryCount; i++) {
 				debugCategories[i] = "\n" + (((GoodsCategory)i).ToString()) + ":";
 				debugCategories[i] += "\nDemand: " + demand[i];
                 debugCategories[i] += "\nSupply: " + supply[i];
+				
+				categoryPopulated[i] = false;
 			}
 			
             for (int i = 0; i < this.goods.Count; i++) {
                 MarketGood thisGood = goods[i]; 
                 
                 debugCategories[thisGood.categoryIndex] += "\n\t" + thisGood.Name + ":\n\t\tQty:"  + thisGood.Quantity+ " \n\t\tProduction:" + thisGood.Production + "\n\t\tPrice:" + thisGood.Price.ToString(".00#");
-            }  
+				
+				facilityLevelCount += thisGood.Facility.Levels;
+				categoryPopulated[thisGood.categoryIndex] = true;
+            } 
+
+			DebugString += "\nFacilities: " + facilityLevelCount;
+			DebugString += "\nEmployees per Facility: " + Mathf.Min(population / facilityLevelCount, ProductionFacility.MaxEmployeeCountPerLevel);
 			
 			for (int i = 0; i < Good.goodsCategoryCount; i++) {
+				if (!categoryPopulated[i]) {
+					continue;
+				}
 				DebugString += debugCategories[i];
 			}
 			
 			if (foodShortage) {
 				DebugString += "\nFamine!";
+			}
+			
+			if (population / facilityLevelCount > ProductionFacility.MaxEmployeeCountPerLevel) {
+				DebugString += "\nUnemployment!";
 			}
 
             return DebugString;

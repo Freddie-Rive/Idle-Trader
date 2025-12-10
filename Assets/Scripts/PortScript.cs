@@ -17,8 +17,8 @@ public class PortScript : MonoBehaviour
     {
         market = new Market("Test", 100, 1000);
 
-        market.AddGood(new MarketGood(GoodsType.Wheat, 5f, market.Population));
-        market.AddGood(new MarketGood(GoodsType.Meat, 5f , market.Population));
+        market.AddGood(new MarketGood(GoodsType.Wheat, 5f, ProductionMethod.TwoPerPop));
+        market.AddGood(new MarketGood(GoodsType.Meat, 5f , ProductionMethod.TwoPerPop));
 
 
         Debug.Log(market.DebugPrintState());

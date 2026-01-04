@@ -49,9 +49,10 @@ namespace Trade
 		EquivalentToPop,
 		HalfOfPop,
 		TwoPerPop,
-		Subsistance,
+        Subsistance,
 		NoProduction
 	}
+
 	
 	//will be used by markets to produce goods. probably will be included in the MarketGood object
 	public class ProductionFacility
@@ -127,9 +128,6 @@ namespace Trade
         protected float price;
         protected int qty; //could argue we need to have a float here? for smaller numbers? or limit production to min 1?
         protected GoodsCategory goodsCategory; //setup based on the goodsType, shouldn't be settable outside the object
-		
-		public static int goodsCategoryCount = System.Enum.GetNames(typeof(GoodsCategory)).Length;
-		public static int goodsTypeCount = System.Enum.GetNames(typeof(GoodsType)).Length;
 
         public Good(GoodsType type, float initialPrice, int initialQty)
         {
@@ -346,7 +344,7 @@ namespace Trade
                 this.price = this.basePrice * 5.0f;
                 return;
             }
-            this.price = this.basePrice * demand / this.TotalQuantity;//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
+            this.price = this.basePrice * ((demand / this.TotalQuantity) + 0.5f);//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
         }
 
         public void UpdateQty(int demand) 
@@ -398,16 +396,20 @@ namespace Trade
 
     public class Market
     {
+        public static int goodsCategoryCount = System.Enum.GetNames(typeof(GoodsCategory)).Length;
+        public static int goodsTypeCount = System.Enum.GetNames(typeof(GoodsType)).Length;
+        public static int prodMethodCount = System.Enum.GetNames(typeof(ProductionMethod)).Length;
+
         public const float updateRate = 1f;
 
         private List<MarketGood> goods;
         private float liquidCurrency;
         private int population;
         private string name;
-		private bool foodShortage; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
+		private bool foodShortage, unemployment; //either use to set up unqiue famine logic or just to show the player that there is a famine going on.
 
-        private int[] demand = new int[Good.goodsCategoryCount];
-		private int[] supply = new int[Good.goodsCategoryCount];
+        private int[] demand = new int[goodsCategoryCount];
+		private int[] supply = new int[goodsCategoryCount];
         // private int[] localProductionModifiers = new int[System.Enum.GetNames(typeof(GoodsType)).Length];
 
         public Market(string _name, int startingCurrency, int startingPopulation)
@@ -463,6 +465,18 @@ namespace Trade
             return goods[index];
         }
 
+        public MarketGood GetGood(GoodsType type)
+        {
+            foreach(MarketGood good in goods)
+            {
+                if (good.Type == type)
+                {
+                    return good;
+                }
+            }
+            return null;
+        }
+
         public void AddGood(MarketGood newGood)
         {
             goods.Add(newGood);
@@ -497,9 +511,11 @@ namespace Trade
 		
 		void UpdatePopulation() {
 			if (foodShortage) {
-				this.population = Mathf.RoundToInt(population * 0.8f);
-			} else {
-				this.population = Mathf.RoundToInt(population * 1.1f);
+				this.population = Mathf.RoundToInt(population * 0.95f);
+			} else if (unemployment) { 
+                this.population = (int)Mathf.Ceil(population * 1.05f);
+            } else {
+				this.population = Mathf.RoundToInt(population * 1.01f);
 			}
 		}
 
@@ -507,10 +523,11 @@ namespace Trade
         {
 			//currently has 2 for loops. Could perhaps be reduced to 1 without much important missing functionality
 			foodShortage = false;
+            unemployment = false;
 			//int popsFed = 0; using the categorySupply for food instead
 			
 			//wipe existing supply
-			supply = new int[Good.goodsCategoryCount];
+			supply = new int[goodsCategoryCount];
 			
 			int facilityCount = 0;
 			//group supply from various goods to their categories
@@ -525,6 +542,11 @@ namespace Trade
 			}
 			
 			int employeesPerFacility = this.population / facilityCount;
+
+            if (employeesPerFacility > ProductionFacility.MaxEmployeeCountPerLevel)
+            {
+                unemployment = true;
+            }
 			
 			//assign each individual goods weight, update its quantity
 			for (int i = 0; i < goods.Count; i++) {
@@ -576,14 +598,14 @@ namespace Trade
         public string DebugPrintState () {
             string DebugString = this.Name + " state:";
 			
-			string[] debugCategories = new string[Good.goodsCategoryCount];
-			bool[] categoryPopulated = new bool[Good.goodsCategoryCount];
+			string[] debugCategories = new string[goodsCategoryCount];
+			bool[] categoryPopulated = new bool[goodsCategoryCount];
 			
 			DebugString += "\nPopulation: " + population;
 			
 			int facilityLevelCount = 0;
 			
-			for (int i = 0; i < Good.goodsCategoryCount; i++) {
+			for (int i = 0; i < goodsCategoryCount; i++) {
 				debugCategories[i] = "\n" + (((GoodsCategory)i).ToString()) + ":";
 				debugCategories[i] += "\nDemand: " + demand[i];
                 debugCategories[i] += "\nSupply: " + supply[i];
@@ -603,7 +625,7 @@ namespace Trade
 			DebugString += "\nFacilities: " + facilityLevelCount;
 			DebugString += "\nEmployees per Facility: " + Mathf.Min(population / facilityLevelCount, ProductionFacility.MaxEmployeeCountPerLevel);
 			
-			for (int i = 0; i < Good.goodsCategoryCount; i++) {
+			for (int i = 0; i < goodsCategoryCount; i++) {
 				if (!categoryPopulated[i]) {
 					continue;
 				}
@@ -614,7 +636,7 @@ namespace Trade
 				DebugString += "\nFamine!";
 			}
 			
-			if (population / facilityLevelCount > ProductionFacility.MaxEmployeeCountPerLevel) {
+			if (unemployment) {
 				DebugString += "\nUnemployment!";
 			}
 

@@ -52,6 +52,13 @@ namespace Trade
         Subsistance,
 		NoProduction
 	}
+	
+	//ports & ships will use these to trade imperfect info on markets
+	public struct PriceInfo {
+		public int dayRecorded;
+		public float price;
+		public int portIndex;
+	}
 
 	
 	//will be used by markets to produce goods. probably will be included in the MarketGood object
@@ -646,6 +653,9 @@ namespace Trade
 
     public class TradeController : MonoBehaviour
     {
+		
+		public PortScript[] portArr;
+		
         // Start is called before the first frame update
         void Start()
         {

@@ -12,6 +12,8 @@ public class PortScript : MonoBehaviour
 
     private float updateMarketTime;
     private PortScript[] portArr;
+	private PriceInfo[] lowestKnownPrices;
+	private PriceInfo[] highestKnownPrices;
      
     // Start is called before the first frame update
     void Start()

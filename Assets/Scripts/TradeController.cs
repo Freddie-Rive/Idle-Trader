@@ -659,7 +659,14 @@ namespace Trade
         // Start is called before the first frame update
         void Start()
         {
+            GameObject[] portObjArr = GameObject.FindGameObjectsWithTag("Port");
 
+            portArr = new PortScript[portObjArr.Length];
+
+            for(int i = 0; i < portObjArr.Length; i++)
+            {
+                portArr[i] = portObjArr[i].GetComponent<PortScript>();
+            }
         }
 
         // Update is called once per frame

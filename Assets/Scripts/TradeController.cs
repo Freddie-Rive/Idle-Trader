@@ -351,7 +351,7 @@ namespace Trade
                 this.price = this.basePrice * 5.0f;
                 return;
             }
-            this.price = this.basePrice * ((demand / this.TotalQuantity) + 0.5f);//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
+            this.price = this.basePrice * (demand / (this.TotalQuantity + (this.production - demand)));//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
         }
 
         public void UpdateQty(int demand) 
@@ -653,7 +653,8 @@ namespace Trade
 
     public class TradeController : MonoBehaviour
     {
-		
+		public float gridSize;
+        public int portCount;
 		public PortScript[] portArr;
 		
         // Start is called before the first frame update
@@ -673,6 +674,24 @@ namespace Trade
         void Update()
         {
 
+        }
+
+        public int GetIndexOfPort (GameObject input)
+        {
+            for(int i = 0; i < portArr.Length; i++) {
+                GameObject thisObj = portArr[i].gameObject;
+
+                if (thisObj == input)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        public PortScript GetPort(int index)
+        {
+            return portArr[index];
         }
     }
 }

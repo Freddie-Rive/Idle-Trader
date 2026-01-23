@@ -329,6 +329,14 @@ namespace Trade
 			}
 		}
 		
+		public float basePrice
+		{
+			get
+			{
+				return this.basePrice;
+			}
+		}
+		
 		public int TotalQuantity
 		{
 			get 
@@ -654,20 +662,47 @@ namespace Trade
     public class TradeController : MonoBehaviour
     {
 		public float gridSize;
-        public int portCount;
-		public PortScript[] portArr;
+        public int rowCount, columnCount, portCount;
+		public PortScript[] portArr, portGrid;
+		public GameObject portObj;
 		
         // Start is called before the first frame update
         void Start()
         {
-            GameObject[] portObjArr = GameObject.FindGameObjectsWithTag("Port");
+			int gridSize = rowCount * columnCount;
+			
+			//we do a little input validation :)
+			portCount = Mathf.Min(portCount, gridSize);
+			
+			portArr = new PortScript[portCount];
+			portGrid = new PortScript[gridSize];
+			
+			for (int i = 0; i < portCount; i++) {
+				int row = Random.Range(0,rowCount);
+				int column = Random.Range(0, columnCount);
+				
+				int indexFromCoords = (row * columnCount) + column;
+				if (portGrid[indexFromCoords] != null) {
+					i--;
+					continue;
+				}
+				
+				float xPos = (row - (rowCount / 2)) * gridSize + (Random.Range(0.0f, gridSize));
+				float zPos = (column - (columnCount / 2)) * gridSize + (Random.Range(0.0f, gridSize));
+				
+				GameObject newPort = Instantiate(portObj, new Vector3(xPos, 0.0f, zPos), Quaternion.identity);
+				
+				portArr[i] = newPort.GetComponent<PortScript>();
+			}
+			
+            //GameObject[] portObjArr = GameObject.FindGameObjectsWithTag("Port");
 
-            portArr = new PortScript[portObjArr.Length];
+            //portArr = new PortScript[portObjArr.Length];
 
-            for(int i = 0; i < portObjArr.Length; i++)
-            {
-                portArr[i] = portObjArr[i].GetComponent<PortScript>();
-            }
+            //for(int i = 0; i < portObjArr.Length; i++)
+            //{
+             //   portArr[i] = portObjArr[i].GetComponent<PortScript>();
+            //}
         }
 
         // Update is called once per frame

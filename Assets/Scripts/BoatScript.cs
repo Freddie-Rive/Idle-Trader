@@ -7,7 +7,7 @@ using TMPro;
 public class BoatScript : MonoBehaviour
 {
     public float speed;
-    public TradeController tc;
+    public TradeController tradeController;
     
     private float step;
     private PortScript currentPort, targetPort; 
@@ -34,34 +34,45 @@ public class BoatScript : MonoBehaviour
     {
         if (currentPort == null)
         {
+			
             if (targetPort == null)
             {
                 FindNextMarket();
-
-                lastPos = transform.position;
-                nextPos = targetPort.gameObject.transform.position;
             } 
 
             step += Time.deltaTime * speed;
+			Debug.Log(step);
 
             if (step >= 1)
             {
                 transform.position = nextPos;
                 currentPort = targetPort;
+				targetPort = null;
+				step = 1;
             } else
             {
                 transform.position = ((lastPos * (1 - step)) + (nextPos * step));
             }          
-        }
+        } else {
+			TradeWithPort();
+		}
     }
 
     void TradeWithPort()
     {
-        
+        currentPort = null;
     }
 
     void FindNextMarket ()
     {
-        
+			step = 0;
+			GameObject[] ports = GameObject.FindGameObjectsWithTag("Port");
+
+			int index = Random.Range(0, ports.Length);
+			
+			targetPort = ports[index].GetComponent<PortScript>();
+
+			lastPos = transform.position;
+			nextPos = targetPort.gameObject.transform.position;
     }
 }

@@ -11,7 +11,6 @@ public class PortScript : MonoBehaviour
     public GameObject debugText;  
 
     private float updateMarketTime;
-    private PortScript[] portArr;
 	private PriceInfo[] lowestKnownPrices;
 	private PriceInfo[] highestKnownPrices;
      
@@ -45,15 +44,6 @@ public class PortScript : MonoBehaviour
 
 
         Debug.Log(market.DebugPrintState());
-        
-        GameObject[] portObjArr = GameObject.FindGameObjectsWithTag("Port");
-
-        portArr = new PortScript[portObjArr.Length];
-
-        for(int i = 0; i < portObjArr.Length; i++)
-        {
-            portArr[i] = portObjArr[i].GetComponent<PortScript>();
-        }
     }
 
     // Update is called once per frame
@@ -61,12 +51,13 @@ public class PortScript : MonoBehaviour
     {
         if (Time.time > updateMarketTime) {
             market.UpdateMarket();
-			debugText.GetComponent<TextMeshPro>().text = market.DebugPrintState();
+			//debugText.GetComponent<TextMeshPro>().text = market.DebugPrintState();
             updateMarketTime += Market.updateRate;
         }
     }
 
     //both of these are O(N^2) so if we could figure out a faster way to look up goods by type i would love that
+	/*
     int FindMinGoodPrice (GoodsType goodType)
     {
         float minPrice = 100f;
@@ -108,4 +99,5 @@ public class PortScript : MonoBehaviour
 
         return index;
     }
+	*/
 }

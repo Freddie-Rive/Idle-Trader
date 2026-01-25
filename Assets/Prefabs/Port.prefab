@@ -12,7 +12,8 @@ GameObject:
   - component: {fileID: 2345472067703050957}
   - component: {fileID: 6531631798129922660}
   - component: {fileID: 7869841303063568745}
-  m_Layer: 0
+  - component: {fileID: -6955426788312082643}
+  m_Layer: 3
   m_Name: Port
   m_TagString: Port
   m_Icon: {fileID: 0}
@@ -103,3 +104,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugText: {fileID: 0}
+--- !u!135 &-6955426788312082643
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4367771248165593327}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}

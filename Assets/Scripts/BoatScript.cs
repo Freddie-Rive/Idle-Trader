@@ -41,7 +41,6 @@ public class BoatScript : MonoBehaviour
             } 
 
             step += Time.deltaTime * speed;
-			Debug.Log(step);
 
             if (step >= 1)
             {

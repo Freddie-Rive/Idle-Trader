@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 namespace Trade
 {
@@ -329,7 +330,7 @@ namespace Trade
 			}
 		}
 		
-		public float basePrice
+		public float BasePrice
 		{
 			get
 			{
@@ -664,7 +665,10 @@ namespace Trade
 		public float gridSize;
         public int rowCount, columnCount, portCount;
 		public PortScript[] portArr, portGrid;
-		public GameObject portObj;
+		public PortScript selectedPort;
+
+        public TextMeshProUGUI tempDebugText;
+        public GameObject ui, portObj;
 		
         // Start is called before the first frame update
         void Start()
@@ -708,7 +712,32 @@ namespace Trade
         // Update is called once per frame
         void Update()
         {
+            if (Input.GetButtonDown("MouseOne"))
+            {
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit rayHit; 
 
+                //Debug.Log(Input.mousePosition);
+                //Instantiate(new GameObject(), Input.mousePosition, Quaternion.identity);
+
+                if (Physics.Raycast(ray, out rayHit, 100, 1<<3))
+                {
+                    selectedPort = rayHit.transform.gameObject.GetComponent<PortScript>();
+                } 
+                else
+                {
+                    selectedPort = null;
+                }
+            }
+
+            if (selectedPort != null)
+            {
+                tempDebugText.text = selectedPort.market.DebugPrintState();
+            }
+            else
+            {
+                tempDebugText.text = "";
+            }
         }
 
         public int GetIndexOfPort (GameObject input)

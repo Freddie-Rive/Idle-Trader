@@ -360,7 +360,11 @@ namespace Trade
                 this.price = this.basePrice * 5.0f;
                 return;
             }
-            this.price = this.basePrice * (demand / (this.TotalQuantity + (this.production - demand)));//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f);//experiment without the clamps
+			
+			float weightedDemand = demand * weightedPercQty;
+			
+			//we use weighteddemand to increase price of more weighted objects in the numerator, and the actual usage of the good in the denominator since that is the amount that will change.
+            this.price = this.basePrice * (weightedDemand / (this.TotalQuantity + (this.production - demand)));//Mathf.Clamp((this.demand / this.TotalQuantity), 0.1f, 3f)
         }
 
         public void UpdateQty(int demand) 
@@ -545,11 +549,16 @@ namespace Trade
 			//wipe existing supply
 			supply = new int[goodsCategoryCount];
 			
+			float[] goodsPriceArr = new float[goods.Count];
+			float[] categoryPriceArr = new float[goodsCategoryCount];
+			
 			int facilityCount = 0;
 			//group supply from various goods to their categories
             for (int i = 0; i < goods.Count; i++) {
 				supply[goods[i].categoryIndex] += goods[i].WeightedQuantity;
 				facilityCount += goods[i].Facility.Levels;
+				goodsPriceArr[i] = goods[i].Price;
+				categoryPriceArr[goods[i].categoryIndex] += goods[i].Price;
             }
 			
 			// check if there is a famine
@@ -569,6 +578,9 @@ namespace Trade
 				float weightedPercQty = 0f;
 				int demandSatisfied = 0;
 				if (supply[goods[i].categoryIndex] > 0) {
+					float relativePrice = goodsPriceArr[i] / categoryPriceArr[goods[i].categoryIndex]'
+					float relativeWeight = (float)goods[i].WeightedQuantity / (float)supply[goods[i].categoryIndex];
+					
 					weightedPercQty = (float)goods[i].WeightedQuantity / (float)supply[goods[i].categoryIndex];
 					demandSatisfied = Mathf.RoundToInt(demand[goods[i].categoryIndex] * weightedPercQty);
 				}

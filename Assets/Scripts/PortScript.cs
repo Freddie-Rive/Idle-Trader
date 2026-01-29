@@ -16,7 +16,7 @@ public class PortScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        int initialPop = Random.Range(100, 5000);
+        int initialPop = Random.Range(10000, 50000);
         market = new Market("Test", 100, initialPop); 
 
         int[] goodArr = new int[8];
